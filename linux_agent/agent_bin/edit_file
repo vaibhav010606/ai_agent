@@ -1,0 +1,25 @@
+#!/home/vp/Desktop/ai_agent/linux_agent/venv/bin/python
+import sys
+
+def main():
+    if len(sys.argv) < 4:
+        print("Usage: edit_file <path> <search_string> <replace_string>")
+        sys.exit(1)
+    path = sys.argv[1]
+    search = sys.argv[2]
+    replace = sys.argv[3]
+    try:
+        with open(path, 'r') as f:
+            content = f.read()
+        if search not in content:
+            print(f"Error: Search string not found in {path}.")
+            sys.exit(1)
+        content = content.replace(search, replace, 1)
+        with open(path, 'w') as f:
+            f.write(content)
+        print(f"Successfully edited {path}")
+    except Exception as e:
+        print(f"Error editing file: {e}")
+
+if __name__ == "__main__":
+    main()

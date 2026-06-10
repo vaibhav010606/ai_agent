@@ -1,0 +1,23 @@
+#!/home/vp/Desktop/ai_agent/linux_agent/venv/bin/python
+import sys
+from duckduckgo_search import DDGS
+
+def main():
+    if len(sys.argv) < 2:
+        print("Usage: search_web <query>")
+        sys.exit(1)
+    query = sys.argv[1]
+    try:
+        results = DDGS().text(query, max_results=3)
+        if not results:
+            print("No results found.")
+            return
+        for r in results:
+            print(f"Title: {r.get('title')}")
+            print(f"URL: {r.get('href')}")
+            print(f"Body: {r.get('body')}\n")
+    except Exception as e:
+        print(f"Error searching web: {e}")
+
+if __name__ == "__main__":
+    main()

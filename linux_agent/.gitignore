@@ -1,0 +1,27 @@
+# Environment files
+.env
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# IDEs
+.idea/
+.vscode/
+
+# Data and output
+chat_history.json
+package_list.txt
+output.mp4
+
+.env
+venv/
+__pycache__/
+

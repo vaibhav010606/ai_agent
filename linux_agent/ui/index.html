@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Cyberpunk Linux Agent</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                        tech: ['"Share Tech Mono"', 'monospace'],
+                    },
+                    colors: {
+                        neon: {
+                            green: '#00FF88',
+                            magenta: '#FF00FF',
+                            cyan: '#00FFFF',
+                            dark: '#050505',
+                            panel: '#0a0a0a'
+                        }
+                    },
+                    boxShadow: {
+                        'neon-green': '0 0 10px rgba(0, 255, 136, 0.5), 0 0 20px rgba(0, 255, 136, 0.3)',
+                        'neon-green-intense': '0 0 15px rgba(0, 255, 136, 0.8), 0 0 30px rgba(0, 255, 136, 0.5), inset 0 0 10px rgba(0,255,136,0.2)',
+                        'neon-magenta': '0 0 10px rgba(255, 0, 255, 0.5), 0 0 20px rgba(255, 0, 255, 0.3)',
+                        'neon-magenta-intense': '0 0 15px rgba(255, 0, 255, 0.8), 0 0 30px rgba(255, 0, 255, 0.5), inset 0 0 10px rgba(255,0,255,0.2)',
+                        'neon-cyan': '0 0 10px rgba(0, 255, 255, 0.5), 0 0 20px rgba(0, 255, 255, 0.3)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #000000;
+            color: #00FF88;
+            overflow: hidden;
+        }
+
+        /* Scanline Overlay */
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(
+                to bottom,
+                rgba(255, 255, 255, 0),
+                rgba(255, 255, 255, 0) 50%,
+                rgba(0, 0, 0, 0.3) 50%,
+                rgba(0, 0, 0, 0.3)
+            );
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 50;
+            opacity: 0.6;
+        }
+
+        /* Subtle vignette */
+        .vignette {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(circle, rgba(0,0,0,0) 40%, rgba(0,0,0,0.8) 100%);
+            pointer-events: none;
+            z-index: 49;
+        }
+
+        /* Glitch Text Effect */
+        .glitch-wrapper {
+            position: relative;
+        }
+        .glitch-text {
+            position: relative;
+            display: inline-block;
+            color: #00FFFF;
+            text-shadow: 0 0 10px rgba(0,255,255,0.5);
+        }
+        .glitch-text::before, .glitch-text::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+        }
+        .glitch-text::before {
+            left: 2px;
+            text-shadow: -2px 0 #FF00FF;
+            clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim 5s infinite linear alternate-reverse;
+        }
+        .glitch-text::after {
+            left: -2px;
+            text-shadow: -2px 0 #00FF88;
+            clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim2 5s infinite linear alternate-reverse;
+        }
+
+        @keyframes glitch-anim {
+            0% { clip: rect(10px, 9999px, 85px, 0); }
+            5% { clip: rect(98px, 9999px, 83px, 0); }
+            10% { clip: rect(61px, 9999px, 94px, 0); }
+            15% { clip: rect(89px, 9999px, 3px, 0); }
+            20% { clip: rect(15px, 9999px, 32px, 0); }
+            25% { clip: rect(66px, 9999px, 2px, 0); }
+            30% { clip: rect(93px, 9999px, 81px, 0); }
+            35% { clip: rect(8px, 9999px, 20px, 0); }
+            40% { clip: rect(44px, 9999px, 42px, 0); }
+            45% { clip: rect(83px, 9999px, 28px, 0); }
+            50% { clip: rect(42px, 9999px, 12px, 0); }
+            55% { clip: rect(69px, 9999px, 29px, 0); }
+            60% { clip: rect(81px, 9999px, 8px, 0); }
+            65% { clip: rect(40px, 9999px, 5px, 0); }
+            70% { clip: rect(18px, 9999px, 40px, 0); }
+            75% { clip: rect(74px, 9999px, 57px, 0); }
+            80% { clip: rect(31px, 9999px, 66px, 0); }
+            85% { clip: rect(51px, 9999px, 62px, 0); }
+            90% { clip: rect(12px, 9999px, 14px, 0); }
+            95% { clip: rect(2px, 9999px, 97px, 0); }
+            100% { clip: rect(90px, 9999px, 16px, 0); }
+        }
+
+        @keyframes glitch-anim2 {
+            0% { clip: rect(25px, 9999px, 100px, 0); }
+            5% { clip: rect(36px, 9999px, 62px, 0); }
+            10% { clip: rect(92px, 9999px, 81px, 0); }
+            15% { clip: rect(52px, 9999px, 93px, 0); }
+            20% { clip: rect(35px, 9999px, 25px, 0); }
+            25% { clip: rect(79px, 9999px, 4px, 0); }
+            30% { clip: rect(61px, 9999px, 33px, 0); }
+            35% { clip: rect(55px, 9999px, 76px, 0); }
+            40% { clip: rect(28px, 9999px, 2px, 0); }
+            45% { clip: rect(98px, 9999px, 40px, 0); }
+            50% { clip: rect(15px, 9999px, 88px, 0); }
+            55% { clip: rect(77px, 9999px, 12px, 0); }
+            60% { clip: rect(44px, 9999px, 63px, 0); }
+            65% { clip: rect(8px, 9999px, 54px, 0); }
+            70% { clip: rect(32px, 9999px, 28px, 0); }
+            75% { clip: rect(94px, 9999px, 90px, 0); }
+            80% { clip: rect(68px, 9999px, 15px, 0); }
+            85% { clip: rect(2px, 9999px, 72px, 0); }
+            90% { clip: rect(85px, 9999px, 36px, 0); }
+            95% { clip: rect(41px, 9999px, 84px, 0); }
+            100% { clip: rect(53px, 9999px, 22px, 0); }
+        }
+
+        /* Custom Scrollbar */
+        .cyber-scrollbar::-webkit-scrollbar {
+            height: 4px;
+            width: 4px;
+        }
+        .cyber-scrollbar::-webkit-scrollbar-track {
+            background: #000;
+            border: 1px solid rgba(0, 255, 136, 0.2);
+        }
+        .cyber-scrollbar::-webkit-scrollbar-thumb {
+            background: #00FF88;
+            border-radius: 0;
+        }
+        .cyber-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #FF00FF;
+        }
+
+        /* Angular Cuts */
+        .clip-cut-br {
+            clip-path: polygon(0 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%);
+        }
+        .clip-cut-tl {
+            clip-path: polygon(15px 0, 100% 0, 100% 100%, 0 100%, 0 15px);
+        }
+        .clip-cut-tr {
+            clip-path: polygon(0 0, calc(100% - 15px) 0, 100% 15px, 100% 100%, 0 100%);
+        }
+
+        /* Blinking Cursor */
+        .blink {
+            animation: blink-animation 1s steps(2, start) infinite;
+        }
+        @keyframes blink-animation {
+            to { visibility: hidden; }
+        }
+
+        /* Chatting State */
+        body.chatting #welcome { display: none !important; }
+        body.chatting #messages { display: flex !important; }
+
+        /* Messages */
+        .msg-row {
+            display: flex;
+            gap: 16px;
+            animation: fadeUp 0.3s ease-out forwards;
+            opacity: 0;
+            transform: translateY(10px);
+            width: 100%;
+        }
+        @keyframes fadeUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .msg-row.user {
+            flex-direction: row-reverse;
+        }
+        .bubble {
+            padding: 16px 20px;
+            max-width: 80%;
+            word-break: break-word;
+            white-space: pre-wrap;
+        }
+        .msg-row.agent .bubble {
+            background: rgba(0, 255, 255, 0.05);
+            border: 1px solid rgba(0, 255, 255, 0.5);
+            color: #00FF88;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+        }
+        .msg-row.user .bubble {
+            background: rgba(255, 0, 255, 0.05);
+            border: 1px solid rgba(255, 0, 255, 0.5);
+            color: #fff;
+            box-shadow: 0 0 10px rgba(255, 0, 255, 0.2);
+            font-family: 'Share Tech Mono', monospace;
+            text-align: right;
+        }
+
+        /* Thinking Indicator */
+        .thinking-bubble {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .thinking-bubble span {
+            width: 8px;
+            height: 8px;
+            background-color: #00FFFF;
+            animation: bounce 1.2s infinite ease-in-out;
+            box-shadow: 0 0 8px #00FFFF;
+        }
+        .thinking-bubble span:nth-child(2) { animation-delay: 0.2s; }
+        .thinking-bubble span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        #mic-btn.listening {
+            background-color: rgba(255, 0, 255, 0.3);
+            border-color: #FF00FF;
+            color: #FF00FF;
+            animation: pulse-magenta 1.5s infinite;
+        }
+        @keyframes pulse-magenta {
+            0% { box-shadow: 0 0 0 0 rgba(255, 0, 255, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 0, 255, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 0, 255, 0); }
+        }
+
+        /* Dashboard sidebar */
+        #dashboard {
+            width: 220px;
+            min-width: 220px;
+            background: #0a0a0a;
+            border-left: 1px solid rgba(0,255,136,0.2);
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+        .stat-card {
+            padding: 14px 16px;
+            border-bottom: 1px solid rgba(0,255,136,0.1);
+        }
+        .stat-label {
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: rgba(0,255,136,0.5);
+            margin-bottom: 6px;
+        }
+        .stat-value {
+            font-size: 13px;
+            font-weight: 700;
+            color: #00FFFF;
+            text-shadow: 0 0 8px rgba(0,255,255,0.5);
+        }
+        .stat-bar-track {
+            margin-top: 6px;
+            height: 4px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(0,255,136,0.2);
+        }
+        .stat-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00FF88, #00FFFF);
+            box-shadow: 0 0 6px rgba(0,255,136,0.6);
+            transition: width 0.6s ease;
+        }
+        .stat-bar-fill.warn  { background: linear-gradient(90deg, #facc15, #f97316); }
+        .stat-bar-fill.crit  { background: linear-gradient(90deg, #f87171, #FF00FF); }
+    </style>
+</head>
+<body>
+    <!-- Decorative Overlays -->
+    <div class="scanlines"></div>
+    <div class="vignette"></div>
+
+    <div class="h-screen w-full flex flex-col relative z-10 font-mono">
+        
+        <!-- Header -->
+        <header class="flex items-center justify-between px-6 py-4 bg-neon-panel/90 border-b border-neon-green/30 backdrop-blur-sm shrink-0 shadow-[0_4px_20px_rgba(0,255,136,0.1)] relative overflow-hidden">
+            <!-- Cyber decoration -->
+            <div class="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-neon-green via-neon-cyan to-neon-magenta opacity-50"></div>
+            <div class="absolute bottom-0 right-10 w-32 h-[2px] bg-neon-magenta shadow-[0_0_10px_#FF00FF]"></div>
+
+            <div class="flex items-center gap-4">
+                <div class="w-10 h-10 border border-neon-cyan flex items-center justify-center bg-black shadow-neon-cyan clip-cut-tl">
+                    <iconify-icon icon="mdi:console-network" class="text-2xl text-neon-cyan"></iconify-icon>
+                </div>
+                <div class="flex flex-col justify-center">
+                    <h1 class="font-bold text-neon-cyan text-sm uppercase tracking-[0.2em] leading-tight">SYS_AGENT<span class="animate-pulse text-neon-magenta">_</span></h1>
+                    <p class="text-[10px] text-neon-green/70 font-tech uppercase tracking-widest mt-0.5">// Powered by GROQ : LLaMA 3.3-70B</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-3 px-4 py-1.5 border border-neon-green/40 bg-black/50 clip-cut-br">
+                <div class="relative flex h-2 w-2">
+                  <span class="animate-ping absolute inline-flex h-full w-full bg-neon-green opacity-75"></span>
+                  <span class="relative inline-flex h-2 w-2 bg-neon-green shadow-[0_0_8px_#00FF88]"></span>
+                </div>
+                <span class="text-[10px] font-bold text-neon-green uppercase tracking-widest hidden sm:inline">Uplink Active</span>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 flex relative overflow-hidden w-full h-full">
+          <!-- Centre column -->
+          <div class="flex-1 flex flex-col items-center justify-center relative overflow-hidden h-full">
+            
+            <!-- Background Tech Elements (Decorative) -->
+            <div class="absolute top-1/4 left-10 text-[10px] text-neon-green/20 font-tech leading-tight whitespace-pre pointer-events-none hidden lg:block">
+01010110 01101111
+01101001 01100100
+SYS.CORE.INIT
+LOADING MODULES...
+[OK] NET_PROTOCOL
+[OK] SEC_OVERRIDE
+            </div>
+            <div class="absolute bottom-1/4 right-10 text-[10px] text-neon-magenta/20 font-tech leading-tight text-right whitespace-pre pointer-events-none hidden lg:block">
+AWAITING_INPUT...
+MEM: 45TB / 256TB
+LATENCY: 0.04ms
+UPLINK: ENCRYPTED
+            </div>
+
+            <!-- Welcome Screen -->
+            <div id="welcome" class="flex flex-col items-center max-w-2xl w-full z-10 space-y-12 !flex">
+                
+                <!-- Avatar: Cyberpunk Diamond -->
+                <div class="relative group">
+                    <div class="absolute -inset-8 border border-neon-magenta/20 rounded-full animate-[spin_10s_linear_infinite] group-hover:border-neon-magenta/60 transition-colors duration-500 hidden md:block"></div>
+                    <div class="absolute -inset-12 border border-dashed border-neon-cyan/20 rounded-full animate-[spin_15s_linear_infinite_reverse] group-hover:border-neon-cyan/50 transition-colors duration-500 hidden md:block"></div>
+
+                    <div class="relative w-28 h-28 border-2 border-neon-magenta bg-black transform rotate-45 shadow-neon-magenta flex items-center justify-center overflow-hidden transition-all duration-300 group-hover:shadow-neon-magenta-intense group-hover:scale-105">
+                        <div class="absolute inset-0 bg-[linear-gradient(transparent_50%,rgba(0,255,255,0.1)_50%)] bg-[length:100%_4px] pointer-events-none"></div>
+                        <div class="transform -rotate-45 relative z-10">
+                            <iconify-icon icon="ph:robot-fill" class="text-6xl text-neon-cyan drop-shadow-[0_0_15px_#00FFFF]"></iconify-icon>
+                        </div>
+                        <div class="absolute top-0 left-0 w-3 h-3 border-t-2 border-l-2 border-white"></div>
+                        <div class="absolute bottom-0 right-0 w-3 h-3 border-b-2 border-r-2 border-white"></div>
+                    </div>
+                </div>
+
+                <!-- Greeting Text Container -->
+                <div class="flex flex-col items-center text-center space-y-6">
+                    <div class="glitch-wrapper">
+                        <h2 class="text-3xl md:text-5xl font-bold font-tech uppercase tracking-[0.1em] text-neon-cyan glitch-text" data-text="HELLO! I'M YOUR LINUX AGENT.">
+                            HELLO! I'M YOUR LINUX AGENT.
+                        </h2>
+                    </div>
+                    
+                    <div class="relative p-4 border-l-2 border-neon-green bg-neon-green/5 max-w-lg backdrop-blur-sm">
+                        <div class="absolute top-0 right-0 w-2 h-2 border-t border-r border-neon-green"></div>
+                        <div class="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-neon-green"></div>
+                        <p class="text-neon-green/80 text-sm md:text-base leading-relaxed tracking-wide">
+                            <span class="text-neon-magenta">>_</span> 
+                            Ask me to manage files, check system status, run diagnostics, install packages, or anything else you'd normally do in a terminal.
+                            <span class="inline-block w-2 h-4 bg-neon-green blink ml-1 align-middle"></span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Messages Container -->
+            <div id="messages" class="w-full h-full overflow-y-auto px-6 py-6 cyber-scrollbar hidden flex-col gap-6 relative z-10">
+                <!-- Messages will be injected here -->
+            </div>
+
+          </div><!-- close centre column -->
+
+          <!-- Dashboard Sidebar -->
+          <div id="dashboard" class="hidden lg:flex flex-col">
+            <div class="stat-card">
+              <div class="text-[9px] uppercase tracking-[0.2em] text-neon-cyan/60 mb-3 font-bold">// SYS_MONITOR</div>
+            </div>
+
+            <!-- CPU -->
+            <div class="stat-card">
+              <div class="stat-label">⚡ CPU Usage</div>
+              <div class="stat-value" id="d-cpu">—</div>
+              <div class="stat-bar-track"><div class="stat-bar-fill" id="d-cpu-bar" style="width:0%"></div></div>
+            </div>
+
+            <!-- RAM -->
+            <div class="stat-card">
+              <div class="stat-label">🧠 RAM</div>
+              <div class="stat-value" id="d-ram">—</div>
+              <div class="stat-bar-track"><div class="stat-bar-fill" id="d-ram-bar" style="width:0%"></div></div>
+            </div>
+
+            <!-- Disk -->
+            <div class="stat-card">
+              <div class="stat-label">💾 Disk ( / )</div>
+              <div class="stat-value" id="d-disk">—</div>
+              <div class="stat-bar-track"><div class="stat-bar-fill" id="d-disk-bar" style="width:0%"></div></div>
+            </div>
+
+            <!-- Uptime -->
+            <div class="stat-card">
+              <div class="stat-label">🕐 Uptime</div>
+              <div class="stat-value text-neon-green text-[11px] leading-snug" id="d-uptime">—</div>
+            </div>
+
+            <!-- Actions -->
+            <div class="stat-card flex flex-col gap-2 mt-auto">
+              <div class="stat-label">⚙ Actions</div>
+              <button onclick="exportHistory()" class="w-full text-left text-[10px] uppercase tracking-wider text-neon-cyan border border-neon-cyan/30 px-3 py-2 hover:bg-neon-cyan/10 hover:border-neon-cyan transition-all">📥 Export Chat</button>
+              <button onclick="clearChat()" class="w-full text-left text-[10px] uppercase tracking-wider text-red-400 border border-red-500/30 px-3 py-2 hover:bg-red-500/10 hover:border-red-400 transition-all">🗑 Clear Chat</button>
+            </div>
+          </div>
+
+        </main>
+
+        <!-- Bottom Input Area -->
+        <div class="w-full px-6 pb-8 pt-4 shrink-0 z-20">
+            
+            <!-- Suggested Prompts Chips -->
+            <div class="flex gap-4 overflow-x-auto pb-4 cyber-scrollbar snap-x">
+                
+                <button onclick="sendChip(this)" class="snap-start shrink-0 flex items-center gap-3 px-5 py-3 bg-neon-panel border border-neon-green/30 hover:border-neon-green hover:bg-neon-green/10 hover:shadow-neon-green transition-all duration-300 group clip-cut-br focus:outline-none">
+                    <iconify-icon icon="ph:folder-open-duotone" class="text-xl text-neon-cyan group-hover:text-neon-magenta transition-colors"></iconify-icon>
+                    <span class="text-xs font-bold text-neon-green uppercase tracking-wider group-hover:text-white transition-colors">List files in home</span>
+                </button>
+
+                <button onclick="sendChip(this)" class="snap-start shrink-0 flex items-center gap-3 px-5 py-3 bg-neon-panel border border-neon-green/30 hover:border-neon-cyan hover:bg-neon-cyan/10 hover:shadow-neon-cyan transition-all duration-300 group clip-cut-br focus:outline-none">
+                    <iconify-icon icon="ph:hard-drives-duotone" class="text-xl text-neon-magenta group-hover:text-neon-cyan transition-colors"></iconify-icon>
+                    <span class="text-xs font-bold text-neon-green uppercase tracking-wider group-hover:text-white transition-colors">Disk space free</span>
+                </button>
+
+                <button onclick="sendChip(this)" class="snap-start shrink-0 flex items-center gap-3 px-5 py-3 bg-neon-panel border border-neon-green/30 hover:border-neon-magenta hover:bg-neon-magenta/10 hover:shadow-neon-magenta transition-all duration-300 group clip-cut-br focus:outline-none">
+                    <iconify-icon icon="ph:broadcast-duotone" class="text-xl text-neon-cyan group-hover:text-neon-green transition-colors"></iconify-icon>
+                    <span class="text-xs font-bold text-neon-green uppercase tracking-wider group-hover:text-white transition-colors">What is my IP?</span>
+                </button>
+
+                <button onclick="sendChip(this)" class="snap-start shrink-0 flex items-center gap-3 px-5 py-3 bg-neon-panel border border-neon-green/30 hover:border-neon-green hover:bg-neon-green/10 hover:shadow-neon-green transition-all duration-300 group clip-cut-br focus:outline-none">
+                    <iconify-icon icon="mdi:language-python" class="text-xl text-neon-magenta group-hover:text-neon-cyan transition-colors"></iconify-icon>
+                    <span class="text-xs font-bold text-neon-green uppercase tracking-wider group-hover:text-white transition-colors">Python version</span>
+                </button>
+
+                <button onclick="sendChip(this)" class="snap-start shrink-0 flex items-center gap-3 px-5 py-3 bg-neon-panel border border-neon-green/30 hover:border-neon-cyan hover:bg-neon-cyan/10 hover:shadow-neon-cyan transition-all duration-300 group clip-cut-br focus:outline-none">
+                    <iconify-icon icon="ph:cpu-duotone" class="text-xl text-neon-cyan group-hover:text-neon-magenta transition-colors"></iconify-icon>
+                    <span class="text-xs font-bold text-neon-green uppercase tracking-wider group-hover:text-white transition-colors">Top Memory Procs</span>
+                </button>
+                
+            </div>
+
+            <!-- Input Box Container -->
+            <div class="relative flex items-end bg-black border-2 border-neon-cyan/40 p-2 shadow-[0_0_15px_rgba(0,255,255,0.1)] focus-within:border-neon-magenta focus-within:shadow-neon-magenta-intense transition-all duration-300 group clip-cut-tl">
+                
+                <div class="absolute -left-[2px] top-1/2 -translate-y-1/2 w-[2px] h-10 bg-neon-magenta opacity-0 group-focus-within:opacity-100 transition-opacity shadow-[0_0_10px_#FF00FF]"></div>
+                <div class="absolute -right-[2px] top-1/2 -translate-y-1/2 w-[2px] h-10 bg-neon-magenta opacity-0 group-focus-within:opacity-100 transition-opacity shadow-[0_0_10px_#FF00FF]"></div>
+
+                <div class="pl-4 pr-2 pb-4 text-neon-magenta font-bold text-lg hidden sm:block">
+                    root@agent:~#
+                </div>
+
+                <textarea 
+                    id="user-input"
+                    rows="1"
+                    placeholder="Enter command or query..." 
+                    class="w-full bg-transparent text-neon-green placeholder-neon-green/40 px-2 py-4 outline-none font-mono text-sm sm:text-base tracking-wide resize-none cyber-scrollbar max-h-32"
+                    autocomplete="off"
+                ></textarea>
+                
+                <div class="flex items-center gap-2 pr-2 pb-2">
+                    <button id="mic-btn" class="p-3 text-neon-cyan hover:text-white hover:bg-neon-cyan/20 border border-transparent hover:border-neon-cyan transition-all duration-200 flex items-center justify-center group/mic clip-cut-br focus:outline-none" title="Voice Input">
+                        <iconify-icon icon="ph:microphone-stage-duotone" class="text-xl group-hover/mic:scale-110 transition-transform"></iconify-icon>
+                    </button>
+                    
+                    <button id="send-btn" class="px-6 py-3 bg-neon-magenta/20 border border-neon-magenta text-neon-magenta hover:bg-neon-magenta hover:text-black font-bold uppercase tracking-wider shadow-neon-magenta transition-all duration-200 active:scale-95 flex items-center justify-center gap-2 clip-cut-tl group/send focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed" title="Execute">
+                        <span class="hidden sm:inline">EXEC</span>
+                        <iconify-icon icon="ph:terminal-window-duotone" class="text-xl"></iconify-icon>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Footer Shortcuts -->
+            <div class="flex items-center justify-between mt-4 text-[10px] text-neon-green/50 font-tech uppercase tracking-widest">
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-2">
+                        <span>[EXEC]</span>
+                        <kbd class="px-2 py-0.5 border border-neon-green/30 text-neon-green bg-neon-green/5">ENTER</kbd>
+                    </div>
+                    <div class="flex items-center gap-2 hidden sm:flex">
+                        <span>[NEW_LINE]</span>
+                        <kbd class="px-2 py-0.5 border border-neon-green/30 text-neon-green bg-neon-green/5">SHIFT+ENTER</kbd>
+                    </div>
+                </div>
+                <div class="hidden md:flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-neon-cyan animate-pulse"></span>
+                    <span>SECURE_CONNECTION_ESTABLISHED</span>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+<script>
+  const SESSION_ID = Math.random().toString(36).slice(2);
+  const messagesEl  = document.getElementById('messages');
+  const inputEl     = document.getElementById('user-input');
+  const sendBtn     = document.getElementById('send-btn');
+  const micBtn      = document.getElementById('mic-btn');
+
+  // Auto-resize textarea
+  inputEl.addEventListener('input', () => {
+    inputEl.style.height = 'auto';
+    inputEl.style.height = Math.min(inputEl.scrollHeight, 128) + 'px';
+  });
+
+  // Enter to send
+  inputEl.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+
+  sendBtn.addEventListener('click', sendMessage);
+
+  function sendChip(el) {
+    const textSpan = el.querySelector('span');
+    if (textSpan) {
+      inputEl.value = textSpan.textContent;
+      sendMessage();
+    }
+  }
+
+  function appendMsg(role, text) {
+    document.body.classList.add('chatting');
+    const row = document.createElement('div');
+    row.className = `msg-row ${role}`;
+    
+    if (role === 'user') {
+        row.innerHTML = `
+          <div class="shrink-0 w-10 h-10 border border-neon-magenta flex items-center justify-center bg-black shadow-neon-magenta clip-cut-tr">
+            <iconify-icon icon="ph:user-fill" class="text-xl text-neon-magenta"></iconify-icon>
+          </div>
+          <div class="bubble clip-cut-tl">${escHtml(text)}</div>`;
+    } else {
+        row.innerHTML = `
+          <div class="shrink-0 w-10 h-10 border border-neon-cyan flex items-center justify-center bg-black shadow-neon-cyan clip-cut-tl">
+            <iconify-icon icon="ph:robot-fill" class="text-xl text-neon-cyan"></iconify-icon>
+          </div>
+          <div class="bubble clip-cut-br">${escHtml(text)}</div>`;
+    }
+    
+    messagesEl.appendChild(row);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+    return row;
+  }
+
+  function showThinking() {
+    document.body.classList.add('chatting');
+    const row = document.createElement('div');
+    row.className = 'msg-row agent';
+    row.id = 'thinking-row';
+    row.innerHTML = `
+      <div class="shrink-0 w-10 h-10 border border-neon-cyan flex items-center justify-center bg-black shadow-neon-cyan clip-cut-tl">
+        <iconify-icon icon="ph:robot-fill" class="text-xl text-neon-cyan"></iconify-icon>
+      </div>
+      <div class="bubble clip-cut-br flex items-center py-4">
+        <div class="thinking-bubble"><span></span><span></span><span></span></div>
+      </div>`;
+    messagesEl.appendChild(row);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  function removeThinking() {
+    const el = document.getElementById('thinking-row');
+    if (el) el.remove();
+  }
+
+  function escHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  const socket = io();
+
+  socket.on('agent_thought', (data) => {
+    // Show intermediate command/thought
+    removeThinking();
+    const thoughtRow = document.createElement('div');
+    thoughtRow.className = 'msg-row agent opacity-70 text-xs';
+    thoughtRow.innerHTML = `
+      <div class="shrink-0 w-8 h-8 flex items-center justify-center bg-black">
+        <iconify-icon icon="ph:terminal-window" class="text-neon-cyan"></iconify-icon>
+      </div>
+      <div class="bubble border border-neon-cyan/20 p-2 text-neon-cyan/70 font-mono">
+        > ${escHtml(data.command)}
+      </div>`;
+    messagesEl.appendChild(thoughtRow);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+    showThinking();
+  });
+
+  socket.on('agent_observation', (data) => {
+    removeThinking();
+    const obsRow = document.createElement('div');
+    obsRow.className = 'msg-row agent opacity-70 text-[10px]';
+    obsRow.innerHTML = `
+      <div class="shrink-0 w-8 h-8"></div>
+      <div class="bubble border-none p-2 bg-black/40 text-gray-400 font-mono whitespace-pre-wrap max-h-32 overflow-y-auto cyber-scrollbar">
+        ${escHtml(data.observation)}
+      </div>`;
+    messagesEl.appendChild(obsRow);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+    showThinking();
+  });
+
+  socket.on('agent_reply', (data) => {
+    removeThinking();
+    appendMsg('agent', data.reply || data.error || 'No response.');
+    sendBtn.disabled = false;
+    inputEl.focus();
+  });
+
+  socket.on('system_alert', (data) => {
+    const row = document.createElement('div');
+    row.className = 'msg-row w-full flex justify-center text-red-500 font-bold';
+    row.innerHTML = `<div class="bg-red-900/20 border border-red-500 p-2">${escHtml(data.msg)}</div>`;
+    messagesEl.appendChild(row);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  });
+
+  async function sendMessage() {
+    const text = inputEl.value.trim();
+    if (!text) return;
+
+    inputEl.value = '';
+    inputEl.style.height = 'auto';
+    sendBtn.disabled = true;
+
+    appendMsg('user', text);
+    showThinking();
+
+    socket.emit('chat_message', { message: text, session_id: SESSION_ID });
+  }
+
+  // Voice Input
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    micBtn.title = 'Voice input not supported in this browser';
+    micBtn.style.opacity = '0.4';
+    micBtn.disabled = true;
+  } else {
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.interimResults = false;
+
+    recognition.onresult = e => {
+      const transcript = e.results[0][0].transcript;
+      inputEl.value = transcript;
+      inputEl.style.height = 'auto';
+      inputEl.style.height = Math.min(inputEl.scrollHeight, 128) + 'px';
+      micBtn.classList.remove('listening');
+    };
+
+    recognition.onerror = () => micBtn.classList.remove('listening');
+    recognition.onend   = () => micBtn.classList.remove('listening');
+
+    let listening = false;
+    micBtn.addEventListener('click', () => {
+      if (listening) {
+        recognition.stop();
+        listening = false;
+        micBtn.classList.remove('listening');
+      } else {
+        recognition.start();
+        listening = true;
+        micBtn.classList.add('listening');
+      }
+    });
+  }
+
+  // ── Dashboard ──
+  async function fetchStats() {
+    try {
+      const r = await fetch('/stats');
+      const d = await r.json();
+
+      // CPU
+      const cpuPct = parseFloat(d.cpu) || 0;
+      document.getElementById('d-cpu').textContent = d.cpu;
+      const cpuBar = document.getElementById('d-cpu-bar');
+      cpuBar.style.width = Math.min(cpuPct, 100) + '%';
+      cpuBar.className = 'stat-bar-fill' + (cpuPct > 85 ? ' crit' : cpuPct > 60 ? ' warn' : '');
+
+      // RAM
+      const ramPct = d.ram_pct || 0;
+      document.getElementById('d-ram').textContent = `${d.ram_used}MB / ${d.ram_total}MB`;
+      const ramBar = document.getElementById('d-ram-bar');
+      ramBar.style.width = Math.min(ramPct, 100) + '%';
+      ramBar.className = 'stat-bar-fill' + (ramPct > 85 ? ' crit' : ramPct > 60 ? ' warn' : '');
+
+      // Disk
+      const diskPct = parseInt(d.disk_pct) || 0;
+      document.getElementById('d-disk').textContent = `${d.disk_used} / ${d.disk_total}`;
+      const diskBar = document.getElementById('d-disk-bar');
+      diskBar.style.width = Math.min(diskPct, 100) + '%';
+      diskBar.className = 'stat-bar-fill' + (diskPct > 85 ? ' crit' : diskPct > 60 ? ' warn' : '');
+
+      // Uptime
+      document.getElementById('d-uptime').textContent = d.uptime;
+    } catch(e) {}
+  }
+  fetchStats();
+  setInterval(fetchStats, 5000);
+
+  // ── Export ──
+  async function exportHistory() {
+    const r = await fetch(`/history?session_id=${SESSION_ID}`);
+    const d = await r.json();
+    const blob = new Blob([JSON.stringify(d, null, 2)], {type: 'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `agent_chat_${Date.now()}.json`;
+    a.click();
+  }
+
+  // ── Clear Chat ──
+  async function clearChat() {
+    if (!confirm('Clear entire chat history?')) return;
+    await fetch('/clear', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({session_id: SESSION_ID})
+    });
+    messagesEl.innerHTML = '';
+    document.body.classList.remove('chatting');
+  }
+</script>
+</body>
+</html>

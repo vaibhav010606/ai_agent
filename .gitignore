@@ -1,0 +1,9 @@
+/.venv
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+*chat_history.json
+*.mp4
+*package_list.txt
